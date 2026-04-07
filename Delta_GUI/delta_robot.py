@@ -188,8 +188,8 @@ class AcromeDelta:
         _, thresh = cv2.threshold(roi, 90, 200, cv2.THRESH_BINARY)
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Create an annotated copy for display
-        annotated = frame.copy()
+        # Create an annotated copy directly from ROI to avoid coordinate shifts
+        annotated = cv2.cvtColor(roi, cv2.COLOR_GRAY2BGR)
 
         for contour in contours:
             approx = cv2.approxPolyDP(contour, 0.04 * cv2.arcLength(contour, True), True)

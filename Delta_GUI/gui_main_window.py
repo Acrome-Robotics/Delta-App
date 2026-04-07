@@ -46,15 +46,15 @@ class MainWindow(QMainWindow):
         left_column = QVBoxLayout()
         
         # 1. Connection Group
-        conn_group = QGroupBox("Bağlantı Ayarları")
+        conn_group = QGroupBox("Connection Settings")
         conn_layout = QGridLayout()
         
         self.port_combo = QComboBox()
         self.refresh_ports()
-        btn_refresh_ports = QPushButton("Yenile")
+        btn_refresh_ports = QPushButton("Refresh")
         btn_refresh_ports.clicked.connect(self.refresh_ports)
         
-        self.btn_connect = QPushButton("Bağlan")
+        self.btn_connect = QPushButton("Connect")
         self.btn_connect.clicked.connect(self.toggle_connection)
         
         conn_layout.addWidget(QLabel("COM Port:"), 0, 0)
@@ -65,18 +65,18 @@ class MainWindow(QMainWindow):
         left_column.addWidget(conn_group)
 
         # 2. Camera Group
-        cam_group = QGroupBox("Kamera Ayarları")
+        cam_group = QGroupBox("Camera Settings")
         cam_layout = QGridLayout()
         
         self.cam_combo = QComboBox()
         self.refresh_cameras()
-        btn_refresh_cam = QPushButton("Yenile")
+        btn_refresh_cam = QPushButton("Refresh")
         btn_refresh_cam.clicked.connect(self.refresh_cameras)
         
-        self.btn_cam_toggle = QPushButton("Kamerayı Başlat")
+        self.btn_cam_toggle = QPushButton("Start Camera")
         self.btn_cam_toggle.clicked.connect(self.toggle_camera)
         
-        cam_layout.addWidget(QLabel("Kamera:"), 0, 0)
+        cam_layout.addWidget(QLabel("Camera:"), 0, 0)
         cam_layout.addWidget(self.cam_combo, 0, 1)
         cam_layout.addWidget(btn_refresh_cam, 0, 2)
         cam_layout.addWidget(self.btn_cam_toggle, 1, 0, 1, 3)
@@ -122,13 +122,13 @@ class MainWindow(QMainWindow):
         widgets_layout.addWidget(self.z_slider, alignment=Qt.AlignCenter)
         man_layout.addLayout(widgets_layout)
 
-        self.btn_enable = QPushButton("Hareket İzni (Enable): KAPALI")
+        self.btn_enable = QPushButton("Motion Enable: OFF")
         self.btn_enable.setCheckable(True)
         self.btn_enable.setStyleSheet("background-color: #f38ba8; color: #11111b; font-weight: bold; padding: 5px;")
         self.btn_enable.clicked.connect(self.toggle_motion_enable)
         man_layout.addWidget(self.btn_enable)
 
-        self.btn_magnet = QPushButton("Mıknatıs AÇ")
+        self.btn_magnet = QPushButton("Magnet ON")
         self.btn_magnet.setCheckable(True)
         self.btn_magnet.setStyleSheet("padding: 5px;")
         self.btn_magnet.clicked.connect(self.toggle_magnet)
@@ -140,7 +140,7 @@ class MainWindow(QMainWindow):
         demo_layout = QVBoxLayout(self.tab_demo)
         
         # Circle Section
-        circle_group = QGroupBox("Çember Çizimi")
+        circle_group = QGroupBox("Circle Drawing")
         circle_layout = QHBoxLayout()
         
         lbl_circle_icon = QLabel()
@@ -165,11 +165,11 @@ class MainWindow(QMainWindow):
         circle_options.addWidget(self.spin_circle_y, 0, 3)
         circle_options.addWidget(QLabel("Z:"), 1, 0)
         circle_options.addWidget(self.spin_circle_z, 1, 1)
-        circle_options.addWidget(QLabel("Yarıçap:"), 1, 2)
+        circle_options.addWidget(QLabel("Radius:"), 1, 2)
         circle_options.addWidget(self.spin_circle_r, 1, 3)
         circle_layout.addLayout(circle_options)
         
-        self.btn_demo_circle = QPushButton("Çember Çiz")
+        self.btn_demo_circle = QPushButton("Draw Circle")
         self.btn_demo_circle.setCheckable(True)
         self.btn_demo_circle.setMinimumHeight(50)
         self.btn_demo_circle.clicked.connect(self.toggle_demo_circle)
@@ -178,7 +178,7 @@ class MainWindow(QMainWindow):
         demo_layout.addWidget(circle_group)
 
         # Square Section
-        square_group = QGroupBox("Kare Çizimi")
+        square_group = QGroupBox("Square Drawing")
         square_layout = QHBoxLayout()
         
         lbl_square_icon = QLabel()
@@ -203,11 +203,11 @@ class MainWindow(QMainWindow):
         square_options.addWidget(self.spin_square_y, 0, 3)
         square_options.addWidget(QLabel("Z:"), 1, 0)
         square_options.addWidget(self.spin_square_z, 1, 1)
-        square_options.addWidget(QLabel("Kenar/2:"), 1, 2)
+        square_options.addWidget(QLabel("Edge/2:"), 1, 2)
         square_options.addWidget(self.spin_square_r, 1, 3)
         square_layout.addLayout(square_options)
         
-        self.btn_demo_square = QPushButton("Kare Çiz")
+        self.btn_demo_square = QPushButton("Draw Square")
         self.btn_demo_square.setCheckable(True)
         self.btn_demo_square.setMinimumHeight(50)
         self.btn_demo_square.clicked.connect(self.toggle_demo_square)
@@ -216,7 +216,7 @@ class MainWindow(QMainWindow):
         demo_layout.addWidget(square_group)
         
         speed_layout = QHBoxLayout()
-        speed_layout.addWidget(QLabel("Hareket Hızı:"))
+        speed_layout.addWidget(QLabel("Movement Speed:"))
         self.slider_speed = QSlider(Qt.Horizontal)
         self.slider_speed.setRange(10, 200)
         self.slider_speed.setValue(100)
@@ -237,28 +237,28 @@ class MainWindow(QMainWindow):
         self.spin_conv_z.setRange(-250, -100)
         self.spin_conv_z.setValue(-206)
         
-        conv_settings.addWidget(QLabel("Z Alma Sınırı (mm):"))
+        conv_settings.addWidget(QLabel("Z Pick Limit (mm):"))
         conv_settings.addWidget(self.spin_conv_z)
         conv_layout.addLayout(conv_settings)
         
-        self.btn_conveyor = QPushButton("Conveyor Modu: KAPALI")
+        self.btn_conveyor = QPushButton("Conveyor Mode: OFF")
         self.btn_conveyor.setCheckable(True)
         self.btn_conveyor.setStyleSheet("background-color: #f38ba8; color: #11111b; font-weight: bold; padding: 10px;")
         self.btn_conveyor.clicked.connect(self.toggle_conveyor)
         conv_layout.addWidget(self.btn_conveyor)
         conv_layout.addStretch()
 
-        self.mode_tabs.addTab(self.tab_manual, "Manuel Kontrol")
-        self.mode_tabs.addTab(self.tab_demo, "Demo Hareketler")
-        self.mode_tabs.addTab(self.tab_conveyor, "Conveyor Modu")
+        self.mode_tabs.addTab(self.tab_manual, "Manual Control")
+        self.mode_tabs.addTab(self.tab_demo, "Demo Movements")
+        self.mode_tabs.addTab(self.tab_conveyor, "Conveyor Mode")
         left_column.addWidget(self.mode_tabs)
 
         # --------- RIGHT COLUMN ---------
         right_column = QVBoxLayout()
         
-        cam_view_group = QGroupBox("Kamera Vizörü")
+        cam_view_group = QGroupBox("Camera Viewfinder")
         cam_view_layout = QVBoxLayout()
-        self.lbl_camera_view = QLabel("Kamera Görüntüsü Yok")
+        self.lbl_camera_view = QLabel("No Camera Feed")
         self.lbl_camera_view.setAlignment(Qt.AlignCenter)
         self.lbl_camera_view.setStyleSheet("background-color: black; color: white; min-width: 640px; min-height: 480px;")
         cam_view_layout.addWidget(self.lbl_camera_view)
@@ -266,7 +266,7 @@ class MainWindow(QMainWindow):
         right_column.addWidget(cam_view_group, stretch=1)
         
         # Telemetry Bar (Horizontal minimal)
-        telemetry_group = QGroupBox("Cihaz Telemetrisi")
+        telemetry_group = QGroupBox("Device Telemetry")
         telemetry_group.setMaximumHeight(80)
         tele_layout = QHBoxLayout()
         
@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
 
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
-        self.statusBar.showMessage("Hazır")
+        self.statusBar.showMessage("Ready")
         
         self.update_control_states()
 
@@ -311,8 +311,8 @@ class MainWindow(QMainWindow):
             self.stop_demo()
             self.btn_demo_circle.setChecked(False)
             self.btn_demo_square.setChecked(False)
-            self.btn_demo_circle.setText("Çember Çiz")
-            self.btn_demo_square.setText("Kare Çiz")
+            self.btn_demo_circle.setText("Draw Circle")
+            self.btn_demo_square.setText("Draw Square")
             self.btn_demo_circle.setEnabled(True)
             self.btn_demo_square.setEnabled(True)
             
@@ -333,7 +333,7 @@ class MainWindow(QMainWindow):
         self.cam_combo.clear()
         cams = CameraEnumerator.list_cameras()
         if not cams:
-            self.cam_combo.addItem("Kamera Bulunamadı")
+            self.cam_combo.addItem("No Camera Found")
             self.cam_combo.setEnabled(False)
         else:
             self.cam_combo.setEnabled(True)
@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
         if self.dev is None:
             port = self.port_combo.currentData()
             if not port:
-                QMessageBox.warning(self, "Hata", "Lütfen geçerli bir port seçin.")
+                QMessageBox.warning(self, "Error", "Please select a valid port.")
                 return
             try:
                 self.dev = Delta(port)
@@ -355,20 +355,20 @@ class MainWindow(QMainWindow):
                 except:
                     pass
 
-                self.btn_connect.setText("Bağlantıyı Kes")
+                self.btn_connect.setText("Disconnect")
                 self.btn_connect.setStyleSheet("background-color: #a6e3a1; color: #11111b;")
-                self.statusBar.showMessage(f"Bağlandı: {port}")
+                self.statusBar.showMessage(f"Connected: {port}")
                 self.telemetry_timer.start(10) 
             except Exception as e:
-                QMessageBox.critical(self, "Bağlantı Hatası", f"Robota bağlanılamadı:\n{str(e)}")
+                QMessageBox.critical(self, "Connection Error", f"Could not connect to robot:\n{str(e)}")
         else:
             self.telemetry_timer.stop()
             self.dev_mutex.lock()
             self.dev = None  
             self.dev_mutex.unlock()
-            self.btn_connect.setText("Bağlan")
+            self.btn_connect.setText("Connect")
             self.btn_connect.setStyleSheet("")
-            self.statusBar.showMessage("Bağlantı kesildi.")
+            self.statusBar.showMessage("Disconnected.")
             
         self.update_control_states()
 
@@ -384,15 +384,15 @@ class MainWindow(QMainWindow):
                 self.camera_thread.raw_frame_ready.connect(self.conveyor_thread.set_frame)
             
             self.camera_thread.start()
-            self.btn_cam_toggle.setText("Kamerayı Durdur")
+            self.btn_cam_toggle.setText("Stop Camera")
             self.cam_combo.setEnabled(False)
         else:
             self.camera_thread.stop()
             self.camera_thread = None
-            self.btn_cam_toggle.setText("Kamerayı Başlat")
+            self.btn_cam_toggle.setText("Start Camera")
             self.cam_combo.setEnabled(True)
             self.lbl_camera_view.clear()
-            self.lbl_camera_view.setText("Kamera Görüntüsü Yok")
+            self.lbl_camera_view.setText("No Camera Feed")
 
     @pyqtSlot(QImage)
     def update_gui_image(self, q_img):
@@ -412,16 +412,16 @@ class MainWindow(QMainWindow):
     def toggle_conveyor(self, checked):
         if checked:
             if self.dev is None:
-                QMessageBox.warning(self, "Uyarı", "Lütfen önce robota bağlanın.")
+                QMessageBox.warning(self, "Warning", "Please connect to the robot first.")
                 self.btn_conveyor.setChecked(False)
                 return
                 
             if self.camera_thread is None or not self.camera_thread.isRunning():
-                QMessageBox.warning(self, "Uyarı", "Lütfen önce kamerayı başlatın.")
+                QMessageBox.warning(self, "Warning", "Please start the camera first.")
                 self.btn_conveyor.setChecked(False)
                 return
 
-            self.btn_conveyor.setText("Conveyor Modu: AÇIK")
+            self.btn_conveyor.setText("Conveyor Mode: ON")
             self.btn_conveyor.setStyleSheet("background-color: #a6e3a1; color: #11111b; font-weight: bold; padding: 10px;")
             
             z_limit = self.spin_conv_z.value()
@@ -434,7 +434,7 @@ class MainWindow(QMainWindow):
                 
             self.conveyor_thread.start()
         else:
-            self.btn_conveyor.setText("Conveyor Modu: KAPALI")
+            self.btn_conveyor.setText("Conveyor Mode: OFF")
             self.btn_conveyor.setStyleSheet("background-color: #f38ba8; color: #11111b; font-weight: bold; padding: 10px;")
             
             if self.conveyor_thread:
@@ -445,7 +445,7 @@ class MainWindow(QMainWindow):
                         pass
                 self.conveyor_thread.stop()
                 self.conveyor_thread = None
-                self.statusBar.showMessage("Conveyor durduruldu.")
+                self.statusBar.showMessage("Conveyor stopped.")
                 
         self.update_control_states()
 
@@ -533,28 +533,28 @@ class MainWindow(QMainWindow):
 
     def toggle_motion_enable(self, checked):
         if checked:
-            self.btn_enable.setText("Hareket İzni (Enable): AÇIK")
+            self.btn_enable.setText("Motion Enable: ON")
             self.btn_enable.setStyleSheet("background-color: #a6e3a1; color: #11111b; font-weight: bold; padding: 5px;")
             self.go_to_position(self.spin_x.value(), self.spin_y.value(), self.spin_z.value())
         else:
-            self.btn_enable.setText("Hareket İzni (Enable): KAPALI")
+            self.btn_enable.setText("Motion Enable: OFF")
             self.btn_enable.setStyleSheet("background-color: #f38ba8; color: #11111b; font-weight: bold; padding: 5px;")
 
     def toggle_magnet(self, checked):
         if self.dev:
             self.dev.pick(checked)
-            self.btn_magnet.setText("Mıknatıs KAPAT" if checked else "Mıknatıs AÇ")
+            self.btn_magnet.setText("Magnet OFF" if checked else "Magnet ON")
 
     def toggle_demo_circle(self, checked):
         if checked:
             self.btn_demo_square.setChecked(False)
             self.stop_demo()
             self.start_demo(DemoThread.MODE_CIRCLE)
-            self.btn_demo_circle.setText("Durdur")
+            self.btn_demo_circle.setText("Stop")
             self.btn_demo_square.setEnabled(False)
         else:
             self.stop_demo()
-            self.btn_demo_circle.setText("Çember Çiz")
+            self.btn_demo_circle.setText("Draw Circle")
             self.btn_demo_square.setEnabled(True)
 
     def toggle_demo_square(self, checked):
@@ -562,11 +562,11 @@ class MainWindow(QMainWindow):
             self.btn_demo_circle.setChecked(False)
             self.stop_demo()
             self.start_demo(DemoThread.MODE_SQUARE)
-            self.btn_demo_square.setText("Durdur")
+            self.btn_demo_square.setText("Stop")
             self.btn_demo_circle.setEnabled(False)
         else:
             self.stop_demo()
-            self.btn_demo_square.setText("Kare Çiz")
+            self.btn_demo_square.setText("Draw Square")
             self.btn_demo_circle.setEnabled(True)
 
     def update_demo_speed(self, val):
@@ -596,7 +596,7 @@ class MainWindow(QMainWindow):
         if self.demo_thread:
             self.demo_thread.stop()
             self.demo_thread = None
-            self.statusBar.showMessage("Demo durduruldu.")
+            self.statusBar.showMessage("Demo stopped.")
 
     def closeEvent(self, event):
         if self.conveyor_thread: self.conveyor_thread.stop()

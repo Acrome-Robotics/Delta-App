@@ -27,6 +27,7 @@ class ConveyorThread(QThread):
         self.x_offset = 2
         self.y_offset = -15
         self.initialPos = [-15, -20, -180]
+        self._is_at_initial_pos = False
 
     def set_frame(self, frame):
         """Receive the latest frame from CameraThread."""
@@ -38,7 +39,7 @@ class ConveyorThread(QThread):
         self._running = True
         
         # Go to initial position
-        self.status_msg.emit("Conveyor başladı. Başlangıç pozisyonuna gidiliyor...")
+        self.status_msg.emit("Conveyor started. Moving to initial position...")
         try:
             if self.dev is not None:
                 self.dev_mutex.lock()
@@ -47,8 +48,9 @@ class ConveyorThread(QThread):
                 pos = self.robot.angle_to_pos(theta)
                 self.dev.set_motors(np.int_(pos))
                 self.dev_mutex.unlock()
+                self._is_at_initial_pos = True
         except Exception as e:
-            self.status_msg.emit(f"Hata: {e}")
+            self.status_msg.emit(f"Error: {e}")
             if self.dev_mutex.tryLock():
                 self.dev_mutex.unlock()
             self._running = False
@@ -71,8 +73,9 @@ class ConveyorThread(QThread):
                 self.processed_frame.emit(annotated_frame)
                 
                 if detection is not None:
+                    self._is_at_initial_pos = False
                     obj_x, obj_y, label = detection
-                    self.status_msg.emit(f"Nesne algılandı! Tip: {label}")
+                    self.status_msg.emit(f"Object detected! Type: {label}")
                     
                     coinPos = [obj_x + self.x_offset, obj_y - obj_y/20, self.calc_Z]
                     
@@ -135,22 +138,30 @@ class ConveyorThread(QThread):
                                 self.dev.set_motors(np.int_(pos))
                                 self.dev_mutex.unlock()
                             
+                            # Keep camera view fluid during movement by emitting latest raw frame
+                            self._mutex.lock()
+                            feed = self.latest_frame.copy() if self.latest_frame is not None else None
+                            self._mutex.unlock()
+                            if feed is not None:
+                                self.processed_frame.emit(feed)
+                            
                             endTime = time.time()
                             self.msleep(10) # Prevent 100% CPU
                             
-                    self.status_msg.emit("Taşıma tamamlandı, yeni nesne bekleniyor...")
+                    self.status_msg.emit("Transfer complete, waiting for new object...")
                 else:
-                    self.status_msg.emit("Nesne bekleniyor...")
-                    if self.dev is not None:
+                    self.status_msg.emit("Waiting for object...")
+                    if self.dev is not None and not self._is_at_initial_pos:
                         theta = self.robot.inverse_kin(self.initialPos[0], self.initialPos[1], self.initialPos[2])
                         pos = self.robot.angle_to_pos(theta)
                         self.dev_mutex.lock()
                         self.dev.pick(False)
                         self.dev.set_motors(np.int_(pos))
                         self.dev_mutex.unlock()
-                    self.msleep(500) # Wait a bit before trying to detect again
+                        self._is_at_initial_pos = True
+                    self.msleep(30) # Wait a bit before trying to detect again (changed from 500 to keep fluid video)
             except Exception as e:
-                self.status_msg.emit(f"Hata: {e}")
+                self.status_msg.emit(f"Error: {e}")
                 self.msleep(1000)
 
     def stop(self):

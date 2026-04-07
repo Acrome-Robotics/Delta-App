@@ -51,10 +51,10 @@ class DemoThread(QThread):
             if self.dev is not None:
                 if self.mode == self.MODE_CIRCLE:
                     theta = self.robot.inverse_kin(self.cx, self.cy, self.circle_z)
-                    self.status_msg.emit("Daire modu başlatılıyor...")
+                    self.status_msg.emit("Starting Circle demo...")
                 else:
                     theta = self.robot.inverse_kin(self.Rect4[0], self.Rect4[1], self.Rect4[2])
-                    self.status_msg.emit("Kare modu başlatılıyor...")
+                    self.status_msg.emit("Starting Square demo...")
                 
                 pos = self.robot.angle_to_pos(theta)
                 self.dev_mutex.lock()
@@ -62,7 +62,7 @@ class DemoThread(QThread):
                 self.dev_mutex.unlock()
                 self.msleep(1000)
         except Exception as e:
-            self.status_msg.emit(f"Başlatma Hatası: {e}")
+            self.status_msg.emit(f"Start Error: {e}")
             self._running = False
             if self.dev_mutex.tryLock(): # safeguard unlock
                 self.dev_mutex.unlock()
@@ -138,7 +138,7 @@ class DemoThread(QThread):
                     # Update last_time just in case mode switches (though mode doesn't switch dynamically here)
                     last_time = time.time()
             except Exception as e:
-                self.status_msg.emit(f"Hata: {e}")
+                self.status_msg.emit(f"Error: {e}")
                 self.msleep(500)
 
     def stop(self):

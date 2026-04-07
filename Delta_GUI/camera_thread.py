@@ -98,7 +98,7 @@ class CameraEnumerator:
             if cap.isOpened():
                 ret, _ = cap.read()
                 if ret:
-                    name_str = f"Kamera {i}"
+                    name_str = f"Camera {i}"
                     if hw_idx < len(hw_names):
                         name_str += f" - {hw_names[hw_idx]}"
                         hw_idx += 1
