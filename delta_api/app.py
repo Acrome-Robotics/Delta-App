@@ -2,12 +2,12 @@ import sys
 import os
 import time
 import numpy as np
+import threading
 
 # Add project root and python-library to sys.path so we can import delta related modules
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'python-library'))
-sys.path.append(os.path.join(BASE_DIR, 'delta_conveyor'))
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -19,6 +19,29 @@ CORS(app)
 
 dev = None
 robot = None
+api_lock = threading.Lock()
+is_running = True
+
+def telemetry_loop():
+    """
+    Background thread that continuously polls dev.update() every 10ms.
+    This mimics the working Delta_GUI timer mechanism and prevents 
+    the controller from timing out or dropping serial synchronization.
+    """
+    global dev
+    while is_running:
+        if dev is not None:
+            with api_lock:
+                try:
+                    dev.update()
+                except Exception as e:
+                    # Clear input buffer on error to recover sync
+                    try:
+                        if hasattr(dev, '_Controller__ph'):
+                            dev._Controller__ph.reset_input_buffer()
+                    except:
+                        pass
+        time.sleep(0.01)
 
 def init_robot():
     global dev, robot
@@ -33,6 +56,22 @@ def init_robot():
         dev = Delta(com_port)
         robot = AcromeDelta()
         print("Connection successful!")
+        
+        # Prevent the robot from slamming into the ground:
+        # Initialize the target motor positions to a safe home position (X=0, Y=0, Z=-180)
+        # exactly as the working Delta_GUI does, before the background thread starts blasting updates.
+        try:
+            theta = robot.inverse_kin(0, 0, -180)
+            pos = robot.angletoPos(theta)
+            dev.set_motors(np.int_(pos))
+            dev.update() # Send initial position frame safely
+        except Exception as e:
+            pass
+        
+        # Start the background telemetry thread
+        t = threading.Thread(target=telemetry_loop, daemon=True)
+        t.start()
+        print("Background telemetry thread started.")
     except Exception as e:
         print(f"Connection error: {e}")
         sys.exit(1)
@@ -48,8 +87,10 @@ def move_pos():
     try:
         theta = robot.inverse_kin(x, y, z)
         pos = robot.angletoPos(theta)
-        dev.set_motors(np.int_(pos))
-        dev.update()
+        
+        with api_lock:
+            if dev: dev.set_motors(np.int_(pos))
+            
         return jsonify({"status": "success", "theta": theta, "pos": pos.tolist()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -58,20 +99,18 @@ def move_pos():
 def move_pos_traj():
     data = request.json
     x, y, z = data.get('x'), data.get('y'), data.get('z')
-    ms = data.get('ms', 1000) # Default to 1 second if not provided
+    ms = data.get('ms', 1000) 
     
     if None in [x, y, z]:
         return jsonify({"error": "x, y, z parameters are required"}), 400
         
     try:
-        traj_time = ms / 1000.0 # calculate time in seconds
+        traj_time = ms / 1000.0 
         
-        # Get Current position as Initial Position
-        dev.update() # Get latest reading
-        curr_mot_pos = dev.position
-        
-        # postoAngle needs a single value per array call, but dev.position is a list.
-        # postoAngle seems to work natively with scalar integers too based on DeltaRobot code
+        with api_lock:
+            if not dev: return jsonify({"error": "Device offline"}), 500
+            curr_mot_pos = dev.position
+            
         theta1 = robot.postoAngle(curr_mot_pos[0])
         theta2 = robot.postoAngle(curr_mot_pos[1])
         theta3 = robot.postoAngle(curr_mot_pos[2])
@@ -85,17 +124,20 @@ def move_pos_traj():
             traj_pos = robot.trajectory(start_time, ipos, fpos, traj_time)
             theta = robot.inverse_kin(traj_pos[0], traj_pos[1], traj_pos[2])
             pos = robot.angletoPos(theta)
-            dev.set_motors(np.int_(pos))
-            dev.update()
+            
+            with api_lock:
+                if dev: dev.set_motors(np.int_(pos))
+            
             end_time = time.time()
-            time.sleep(0.01) # Small delay for yielding cpu
+            time.sleep(0.01) 
             
         # Ensure it reaches exactly the final point
         theta = robot.inverse_kin(fpos[0], fpos[1], fpos[2])
         pos = robot.angletoPos(theta)
-        dev.set_motors(np.int_(pos))
-        dev.update()
         
+        with api_lock:
+            if dev: dev.set_motors(np.int_(pos))
+            
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -109,8 +151,9 @@ def grab():
         return jsonify({"error": "state parameter (1 or 0) is required"}), 400
         
     try:
-        dev.pick(bool(state))
-        dev.update()
+        with api_lock:
+            if dev: dev.pick(bool(state))
+            
         return jsonify({"status": "success", "state": state})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -118,11 +161,14 @@ def grab():
 @app.route('/get_mot_pos', methods=['GET'])
 def get_mot_pos():
     try:
-        dev.update()
+        with api_lock:
+            if not dev: return jsonify({"error": "Device offline"}), 500
+            pos = list(dev.position) # Make a copy to avoid race conditions
+            
         return jsonify({
-            "m1": dev.position[0],
-            "m2": dev.position[1],
-            "m3": dev.position[2]
+            "m1": pos[0],
+            "m2": pos[1],
+            "m3": pos[2]
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -141,9 +187,10 @@ def delay_cmd():
 @app.route('/get_ee_pos', methods=['GET'])
 def get_ee_pos():
     try:
-        dev.update()
-        curr_mot_pos = dev.position
-        
+        with api_lock:
+            if not dev: return jsonify({"error": "Device offline"}), 500
+            curr_mot_pos = list(dev.position)
+            
         theta1 = robot.postoAngle(curr_mot_pos[0])
         theta2 = robot.postoAngle(curr_mot_pos[1])
         theta3 = robot.postoAngle(curr_mot_pos[2])
@@ -159,9 +206,7 @@ def get_ee_pos():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Initialize the board and ask user for port before launching server
     init_robot()
-    
     print("\nStarting Flask server. You can access the API endpoints on http://127.0.0.1:5000")
     print("Press CTRL+C to stop.")
     app.run(host='0.0.0.0', port=5000)
