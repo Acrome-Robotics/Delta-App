@@ -40,17 +40,32 @@ if [ ! -f "$API_DIR/app.py" ]; then
     exit 1
 fi
 
-# 1. Create virtual environment
-echo "[1/3] Creating Python virtual environment..."
+# 1. Check internet connectivity
+echo "[1/4] Checking internet connection..."
+if ! ping -c 1 -W 3 pypi.org &> /dev/null; then
+    echo ""
+    echo "=========================================="
+    echo " ❌ ERROR: No internet connection!"
+    echo "=========================================="
+    echo " Setup requires internet to download Python packages."
+    echo " Please connect to the internet and try again:"
+    echo "   bash setup.sh"
+    echo "=========================================="
+    exit 1
+fi
+echo "  ✅ Internet connection OK."
+
+# 2. Create virtual environment
+echo "[2/4] Creating Python virtual environment..."
 python3 -m venv "$API_DIR/venv"
 
-# 2. Install dependencies
-echo "[2/3] Installing Python dependencies..."
+# 3. Install dependencies
+echo "[3/4] Installing Python dependencies..."
 "$API_DIR/venv/bin/pip" install --upgrade pip
 "$API_DIR/venv/bin/pip" install -r "$API_DIR/requirements.txt"
 
-# 3. Create global 'delta' command
-echo "[3/3] Installing 'delta' command globally..."
+# 4. Create global 'delta' command
+echo "[4/4] Installing 'delta' command globally..."
 
 sudo tee /usr/local/bin/delta > /dev/null << 'CMDEOF'
 #!/bin/bash
