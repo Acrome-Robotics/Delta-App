@@ -1,58 +1,123 @@
 # Acrome Delta Robot App Suite
 
-This repository contains various interfaces, applications, and libraries for controlling the Acrome Delta Robot. It includes a user-friendly standalone Desktop GUI, an HTTP API for remote integrations, core Python SDKs, and ready-to-run examples.
+This repository contains the completely modernized Client-Server architecture for controlling the Acrome Delta Robot. It includes a user-friendly standalone Desktop GUI and a high-performance HTTP REST API for seamless remote and wireless control.
 
 ## 📂 Project Structure
 
-This project is divided into several modules. Here is where you can find everything:
+- **`GUI_/`** 🖥️
+  The main standalone desktop application built with PyQt5. It acts as an API Client, meaning it no longer communicates with the hardware directly. Instead, it sends HTTP requests to the backend API over the network. It features:
+  - **Manual Control:** Drive the robot to X, Y, Z coordinates manually via sliders or XYZ pads.
+  - **Demo Movements:** Instruct the robot to draw precise circles or squares continuously.
+  - **Conveyor Mode:** Automated computer vision-based pick-and-place mode.
+  - **Standalone Executable:** You do not need Python to run the GUI! Simply navigate to `GUI_/src/dist/` and run **`AcromeDeltaGUI.exe`**.
 
-- **`Delta_GUI/`** 🖥️
-  The main standalone desktop application built with PyQt5. It features:
-  - **Manual Control Phase:** Drive the robot to X, Y, Z coordinates manually.
-  - **Demo Movements:** Instruct the robot to draw circles or squares with adjustable speeds and radiuses.
-  - **Conveyor Mode:** Fully automated computer vision-based pick-and-place mode using a camera feed to detect and relocate shapes (circles, squares, triangles).
-  - **Standalone Executable:** You do not need Python to run the GUI! Simply navigate to `Delta_GUI/dist/` and run **`AcromeDeltaGUI.exe`**.
+- **`API/`** 🌐
+  The brain of the operation. This is a RESTful HTTP backend Server (Flask-based) designed to run directly on the Raspberry Pi (or your local Windows machine). It connects to the Delta robot's hardware UART/USB ports, computes complex forward/inverse kinematics, and exposes extremely simple web endpoints for the GUI.
 
-- **`delta_api/`** 🌐
-  A web API (HTTP interface) to control the Delta robot. Useful for remote executions, integration into bigger factory systems, or controlling the robot via external post requests without needing a direct serial connection.
-
-- **`python-library/`** 📚
-  The core Python API wrapper (`acrome` module) used by all the other applications to communicate over Serial COM ports. If you want to build your own custom script for the Delta Robot, you should reference or install this package.
-
-- **`examples/`** 📝
-  Simple, single-purpose scripts and tutorials focusing on specific operations such as `delta_conveyor` (pure conveyor logic) and `delta_demo` (drawing shapes). Ideal for developers looking to understand the underlying code logic without the complexity of a GUI.
-
-## 🚀 Quick Start (Running the GUI)
-
-### Option 1: No Installation Required (Windows)
-1. Go to the `Delta_GUI/dist/` directory.
-2. Double-click on `AcromeDeltaGUI.exe`.
-3. Select your Delta Robot's COM port and your USB Camera from the settings panel and click "Connect".
-
-### Option 2: Running from Source
-If you are developing or modifying the behavior:
-1. Ensure your Python environment (Python 3) is active.
-2. Install the necessary dependencies via the requirements files:
-   ```bash
-   pip install -r Delta_GUI/requirements.txt
-   ```
-   *(Note: Make sure the `acrome` python-library is accessible in your environment).*
-3. Run the GUI:
-   ```bash
-   cd Delta_GUI
-   python main.py
-   ```
-
-## 🎥 Conveyor Mode & Computer Vision
-The Conveyor Mode requires a camera to be positioned correctly overlooking the pick zone.
-1. Start the camera from the GUI.
-2. Run the **Conveyor Mode** toggle.
-3. The application will track the designated ROI (Region of Interest) at approximately 30 FPS, recognizing blocks via geometry (Square=4 sides, Triangle=3 sides, Circle=>4 sides with specific area checks). When detected, the robot computes inverse kinematics and executes a safe 6-step pick-and-place trajectory automatically. 
-
-## 🔧 Troubleshooting
-- **No Camera Found:** Check system device permissions or USB connections. Try clicking "Refresh" under the camera settings.
-- **Lag in Video Feed:** Video performance has been optimized for the Region of Interest. Ensure well-lit conditions for best object extraction and shape approximations using OpenCV.
-- **Robot Connection Error:** Ensure no other application (like Arduino IDE) is currently using the COM port.
+- **`examples/` & `windows/`** 📝
+  Legacy or alternative scripts and deployment files for specific operations.
 
 ---
-*Built for Acrome Delta Robot systems.*
+
+## 📡 REST API Documentation
+
+The Delta API runs on `http://<YOUR_IP>:5000` and provides a fast, asynchronous interface to control the robot. The backend engine handles all complex mathematical conversions (Angles to XYZ, XYZ to Angles) automatically.
+
+### 1. System Endpoints
+
+#### `GET /list_ports`
+Returns a list of all available serial ports on the server machine (including Raspberry Pi hardware UARTs like `/dev/serial0`).
+- **Response:**
+  ```json
+  {
+    "ports": [
+      {"device": "/dev/serial0", "description": "Raspberry Pi Hardware UART (Pin 14/15)"},
+      {"device": "COM3", "description": "USB Serial Port"}
+    ]
+  }
+  ```
+
+#### `POST /connect`
+Connects the backend to the specified serial port and synchronizes the robot.
+- **Request Body:**
+  ```json
+  { "port": "/dev/serial0" }
+  ```
+- **Response:** `{"status": "success"}` or `{"error": "..."}`
+
+#### `POST /disconnect`
+Safely terminates the serial connection to the robot.
+- **Response:** `{"status": "success"}`
+
+#### `GET /status`
+Returns the current connection status of the backend API.
+- **Response:** `{"status": "connected", "port": "/dev/serial0"}`
+
+### 2. Telemetry Endpoints
+
+#### `GET /get_telemetry`
+Fetches both the raw motor AD angles (M1, M2, M3) and the calculated End-Effector spatial coordinates (X, Y, Z) in a single optimized request. Recommended for high-frequency polling.
+- **Response:**
+  ```json
+  {
+    "m1": 456, "m2": 512, "m3": 512,
+    "x": 0.0, "y": 0.0, "z": -180.5
+  }
+  ```
+
+#### `GET /get_mot_pos` & `GET /get_ee_pos`
+Legacy fallback endpoints to fetch motor-only or end-effector-only positions individually.
+
+### 3. Movement & Control Endpoints
+
+#### `POST /move_pos`
+Moves the robot directly to a specific X, Y, Z coordinate in space. The API automatically calculates the Inverse Kinematics and translates it to motor positions.
+- **Request Body:**
+  ```json
+  {
+    "x": 10.5,
+    "y": -20.0,
+    "z": -150.0
+  }
+  ```
+- **Response:** `{"status": "success"}`
+
+#### `POST /move_pos_traj`
+Executes a time-based smooth trajectory movement to a specific X, Y, Z coordinate over a given duration.
+- **Request Body:**
+  ```json
+  {
+    "x": 10.5,
+    "y": -20.0,
+    "z": -150.0,
+    "ms": 1500
+  }
+  ```
+- **Response:** `{"status": "success"}`
+
+#### `POST /grab`
+Activates or deactivates the end-effector tool (e.g., electromagnet or pneumatic suction).
+- **Request Body:**
+  ```json
+  { "state": 1 }  // 1 to turn ON, 0 to turn OFF
+  ```
+- **Response:** `{"status": "success", "state": 1}`
+
+#### `POST /delay`
+Introduces a strict delay (sleep) on the backend processing queue.
+- **Request Body:**
+  ```json
+  { "ms": 500 }
+  ```
+
+---
+
+### 🚀 How to Run the API (Raspberry Pi)
+The API can be run automatically as a background service. A `delta_api.service` file is included in the `API` folder for Linux systemd integration.
+
+To start it manually from the terminal:
+```bash
+cd API
+source venv/bin/activate
+python3 app.py
+```

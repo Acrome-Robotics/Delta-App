@@ -1,0 +1,6 @@
+Flask
+Flask-Cors
+pyserial
+numpy
+opencv-python
+acrome
