@@ -12,7 +12,7 @@ sys.path.append(os.path.join(BASE_DIR, 'python-library'))
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from acrome.controller import Delta
-from DeltaRobot import AcromeDelta
+from delta_robot import AcromeDelta
 import serial.tools.list_ports
 
 app = Flask(__name__)

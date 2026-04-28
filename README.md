@@ -4,18 +4,29 @@ This repository contains the completely modernized Client-Server architecture fo
 
 ## 📂 Project Structure
 
-- **`GUI_/`** 🖥️
-  The main standalone desktop application built with PyQt5. It acts as an API Client, meaning it no longer communicates with the hardware directly. Instead, it sends HTTP requests to the backend API over the network. It features:
-  - **Manual Control:** Drive the robot to X, Y, Z coordinates manually via sliders or XYZ pads.
-  - **Demo Movements:** Instruct the robot to draw precise circles or squares continuously.
-  - **Conveyor Mode:** Automated computer vision-based pick-and-place mode.
-  - **Standalone Executable:** You do not need Python to run the GUI! Simply navigate to `GUI_/src/dist/` and run **`AcromeDeltaGUI.exe`**.
+- **`gui/`** 🖥️ — Desktop GUI uygulamaları (PyQt5)
+  - **`gui/remote/`** — API Client modu. HTTP üzerinden backend API'ye bağlanarak robotu kontrol eder.
+  - **`gui/standalone/`** — Standalone modu. Doğrudan USB/UART üzerinden donanıma bağlanır (API gerekmez).
+  - Her iki mod da şu özelliklere sahiptir:
+    - **Manual Control:** Slider ve XY pad ile X, Y, Z koordinatlarına hareket.
+    - **Demo Movements:** Daire ve kare çizim modları.
+    - **Conveyor Mode:** Bilgisayar görüntüsüne dayalı otomatik taşıma.
 
-- **`API/`** 🌐
-  The brain of the operation. This is a RESTful HTTP backend Server (Flask-based) designed to run directly on the Raspberry Pi (or your local Windows machine). It connects to the Delta robot's hardware UART/USB ports, computes complex forward/inverse kinematics, and exposes extremely simple web endpoints for the GUI.
+- **`api/`** 🌐 — REST API Sunucusu (Flask)
+  Raspberry Pi veya Windows üzerinde çalışan backend sunucu. Delta robotun UART/USB portlarına bağlanır, ileri/ters kinematik hesaplar ve basit HTTP endpoint'leri sunar.
 
-- **`examples/` & `windows/`** 📝
-  Legacy or alternative scripts and deployment files for specific operations.
+- **`examples/`** 📝 — Kullanım Örnekleri
+  - **`api_usage/`** — API üzerinden robot kontrolü örnekleri (Python & MATLAB).
+  - **`delta_conveyor/`** & **`delta_demo/`** — Doğrudan donanım erişimli legacy scriptler.
+
+- **`deploy/`** 🚀 — Dağıtım dosyaları (`setup.sh`, `delta_api.service`)
+
+- **`build/`** 🔧 — PyInstaller build konfigürasyonları (`.spec` dosyaları)
+
+- **`releases/windows/`** 📦 — Derlenmiş Windows EXE dosyaları:
+  - `AcromeDeltaGUI_Remote.exe` — API client GUI
+  - `AcromeDeltaGUI_Standalone.exe` — Standalone GUI (API gerekmez)
+  - `DeltaAPI.exe` — API sunucusu
 
 ---
 
@@ -113,11 +124,17 @@ Introduces a strict delay (sleep) on the backend processing queue.
 ---
 
 ### 🚀 How to Run the API (Raspberry Pi)
-The API can be run automatically as a background service. A `delta_api.service` file is included in the `API` folder for Linux systemd integration.
+The API can be run automatically as a background service. A `delta_api.service` file is included in the `deploy/` folder for Linux systemd integration.
 
 To start it manually from the terminal:
 ```bash
-cd API
+cd api
 source venv/bin/activate
 python3 app.py
+```
+
+For automated setup on Raspberry Pi, use the setup script:
+```bash
+cd deploy
+bash setup.sh
 ```

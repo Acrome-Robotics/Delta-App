@@ -1,5 +1,0 @@
-PyQt5
-opencv-python
-numpy
-pyserial
-acrome==0.2.0
