@@ -1,20 +1,41 @@
+# ==========================================
+#  Acrome Delta API — Systemd Service
+# ==========================================
+#
+#  This file is OPTIONAL. Use it only if you want the API to start
+#  automatically every time the Raspberry Pi boots up.
+#
+#  Steps:
+#  1. Update the paths below to match your system.
+#  2. Copy this file:
+#       sudo cp delta_api.service /etc/systemd/system/
+#  3. Enable and start the service:
+#       sudo systemctl daemon-reload
+#       sudo systemctl enable delta_api.service
+#       sudo systemctl start delta_api.service
+#
+#  Note: For most use cases, 'delta start' / 'delta stop' commands
+#        (installed via setup.sh) are sufficient. This service file
+#        is for advanced users who need auto-start on boot.
+# ==========================================
+
 [Unit]
 Description=Acrome Delta Robot API Service
 After=network.target
 
 [Service]
 Type=simple
-# Eger Raspberry'deki kullanici adiniz 'pi' degilse (ornek: 'acrome' vs) asagidaki 'pi' yazan yerleri degistirin.
+# Set your Raspberry Pi username (usually 'pi')
 User=pi
-# API klasorunu Raspberry'de nereye kopyaladiysaniz o yolu yazin: (Ornekte Masaustu/API varsayilmistir)
-WorkingDirectory=/home/pi/Desktop/API
-ExecStart=/home/pi/Desktop/API/venv/bin/python3 /home/pi/Desktop/API/app.py
+# Set the full path to the API directory:
+WorkingDirectory=/home/pi/Delta-App/api
+ExecStart=/home/pi/Delta-App/api/venv/bin/python3 /home/pi/Delta-App/api/app.py
 
-# Uygulama cokerse veya manuel kapatilirsa 5 saniye bekle ve YENIDEN BASLAT
-Restart=always
+# Restart on failure after 5 seconds
+Restart=on-failure
 RestartSec=5
 
-# Flask ortam degiskenleri
+# Flask environment variables
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
